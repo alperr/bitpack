@@ -42,7 +42,6 @@ var bitpack;
 		var b = Math.floor(o / 8), i = o % 8;
 		var v0 = v << (7 - i);
 		var m0 = 255 - (1 << (7 - i));
-
 		target[b] = target[b] & m0;
 		target[b] = target[b] | v0;
 	}
@@ -52,7 +51,6 @@ var bitpack;
 		var b = Math.floor(o / 8), i = o % 8;
 		var m = 1 << (7 - i);
 		var s = 7 - i;
-
 		return (target[b] & m) >> s;
 	}
 
@@ -105,17 +103,59 @@ var bitpack;
 		var b = Math.floor(o / 8), i = o % 8;
 		var v0 = 0;
 		var v1 = 0;
+
 		var m0 = 255;
 		var m1 = 255;
 
 		if (bs + i <= 8)
 		{
-			v0 = v << (8 - bs - i)
+			v0 = v << (8 - bs - i);
+			m0 = 255 - ((255 >> (8 - bs)) << (8 - bs - i))
 		}
 		else
 		{
 			v0 = v >> (bs + i - 8);
 			v1 = (v % Math.pow(2, (bs + i - 8))) << (16 - bs - i);
+
+			// bs, i
+			// 2, 0: m0 = 63
+			// 2, 1: m0 = 159
+			// 2, 2: m0 = 207
+			// 2, 3: m0 = 231
+			// 2, 4: m0 = 243
+			// 2, 5: m0 = 249
+			// 2, 6: m0 = 252
+			// 2, 7: m0 = 254
+			
+			// 3, 0: m0 = 31
+			// 3, 1: m0 = 143
+			// 3, 2: m0 = 199
+			// 3, 3: m0 = 227
+			// 3, 4: m0 = 241
+			// 3, 5: m0 = 248
+			// 3, 6: m0 = 252
+			// 3, 7: m0 = 254
+
+			// 8, 0: m0 = 0
+			// 8, 1: m0 = 128
+			// 8, 2: m0 = 192
+			// 8, 3: m0 = 224
+			// 8, 4: m0 = 240
+			// 8, 5: m0 = 248
+			// 8, 6: m0 = 252
+			// 8, 7: m0 = 254
+			
+			// 9, 0: m0 = 0		m1 = 127
+			// 9, 1: m0 = 128 	m1 = 63
+			// 9, 2: m0 = 192 	m1 = 31
+			// 9, 3: m0 = 224 	m1 = 15
+			// 9, 5: m0 = 248 	m1 = 7
+			// 9, 4: m0 = 240 	m1 = 3
+			// 9, 6: m0 = 252 	m1 = 1
+			// 9, 7: m0 = 254 	m1 = 0
+	
+			m0 = 255 - (255 >> i);
+			m1 = 255 >> (bs + i - 8)
 		}
 
 		target[b] = target[b] & m0;
@@ -128,10 +168,6 @@ var bitpack;
 	function r2(target, o, bs)
 	{
 		var b = Math.floor(o / 8), i = o % 8;
-		var m0 = 255;
-		var m1 = 255;
-		var s0 = 0;
-		var s1 = 0;
 
 		// bitsize = 2 , writer
 		// xy 00 00 00
@@ -143,56 +179,6 @@ var bitpack;
 		// 00 00 00 xy
 		// 00 00 00 0x | y0 00 00 00		
 
-		// bitsize = 2 , reader
-		// bitoffset = 0: m0 = 192; s0 = 6; 			// (255 >> 6) << 6 | 
-		// bitoffset = 1: m0 = 96; s0 = 5;  			// (255 >> 6) << 5 | 
-		// bitoffset = 2: m0 = 48; s0 = 4;  			// (255 >> 6) << 4 | 
-		// bitoffset = 3: m0 = 24; s0 = 3;  			// (255 >> 6) << 3 | 
-		// bitoffset = 4: m0 = 12; s0 = 2;  			// (255 >> 6) << 2 | 
-		// bitoffset = 5: m0 = 6; s0 = 1;   			// (255 >> 6) << 1 | 
-		// bitoffset = 6: m0 = 3; s0 = 0;   			// (255 >> 6) << 0 | 
-		// bitoffset = 7: m0 = 1; s0 = -1; m1 = 128; s1 = 7	// (255 >> 6) >> 1 |  (255 << 7) % 256
-
-		// bitsize = 3, writer
-		// xy z0 00 00
-		// 0x yz 00 00
-		// 00 xy z0 00
-		// 00 0x yz 00
-		// 00 00 xy z0
-		// 00 00 0x yz
-		// 00 00 00 xy | z0 00 00 00
-		// 00 00 00 0x | yz 00 00 00
-
-		// bitsize = 3, reader
-		// bitoffset = 0: m0 = 224; s0 = 5;			(255 >> 5) << 5
-		// bitoffset = 1: m0 = 112; s0 = 4;			(255 >> 5) << 4
-		// bitoffset = 2: m0 = 56; s0 = 3;			(255 >> 5) << 3
-		// bitoffset = 3: m0 = 28; s0 = 2;			(255 >> 5) << 2
-		// bitoffset = 4: m0 = 14; s0 = 1;			(255 >> 5) << 1
-		// bitoffset = 5: m0 = 7; s0 = 0;			(255 >> 5) << 0
-		// bitoffset = 6: m0 = 3; s0 = -1; m1 = 128; s1 = 7	(255 >> 5) >> 1 | (255 << 7) % 256
-		// bitoffset = 7: m0 = 1; s0 = -2; m1 = 192; s1 = 6	(255 >> 5) >> 2 | (255 << 6) % 256 
-
-		// bitsize = 5
-		// xy zt u0 00
-		// 0x yz tu 00
-		// 00 xy zt u0
-		// 00 0x yz tu
-		// 00 00 xy zt | u0 00 00 00
-		// 00 00 0x yz | tu 00 00 00
-		// 00 00 00 xy | zt u0 00 00
-		// 00 00 00 0x | yz tu 00 00		
-		
-		// bitsize = 5, reader
-		// bitoffset = 0: m0 = 248; s0 = 3;			(255 >> 3) << 3
-		// bitoffset = 1: m0 = 124; s0 = 2;			(255 >> 3) << 2
-		// bitoffset = 2: m0 = 62; s0 = 1;			(255 >> 3) << 1
-		// bitoffset = 3: m0 = 31; s0 = 0;			(255 >> 3) << 0
-		// bitoffset = 4: m0 = 15; s0 = -1; m1 = 128; s1 = 7 	(255 >> 3) >> 1 | (255 << 7) % 256
-		// bitoffset = 5: m0 = 7; s0 = -2;  m1 = 192; s1 = 6	(255 >> 3) >> 2 | (255 << 6) % 256
-		// bitoffset = 6: m0 = 3; s0 = -3;  m1 = 224; s1 = 5	(255 >> 3) >> 3 | (255 << 5) % 256
-		// bitoffset = 7: m0 = 1; s0 = -4;  m1 = 240; s1 = 4	(255 >> 3) >> 4 | (255 << 4) % 256
-
 		// bitsize = 9
 		// ab cd ef gh | i0 00 00 00	
 		// 0a bc de fg | hi 00 00 00
@@ -202,50 +188,18 @@ var bitpack;
 		// 00 00 0a bc | de fg hi 00
 		// 00 00 00 ab | cd ef gh i0
 		// 00 00 00 0a | bc de fg hi
-		
-		// bitoffset = 0: m0 = 255; s0 = 0; m1 = 128; s1 = 7;		(255 >> 0) << 0 | (255 << 7) % 256
-		// bitoffset = 1: m1 = 127; s0 = -1; m1 = 192; s1 = 6;		(255 >> 0) >> 1 | (255 << 6) % 256
-		// bitoffset = 2: m1 = 63; s0 = -2; m1 = 224; s1 = 5;		(255 >> 0) >> 2 | (255 << 5) % 256
-		// bitoffset = 3: m1 = 31; s0 = -3; m1 = 240; s1 = 4;		(255 >> 0) >> 3 | (255 << 4) % 256
-		// bitoffset = 4: m1 = 15; s0 = -4; m1 = 248; s1 = 3;		(255 >> 0) >> 4 | (255 << 3) % 256
-		// bitoffset = 5: m1 = 7; s0 = -5; m1 = 252; s1 = 2;		(255 >> 0) >> 5 | (255 << 2) % 256
-		// bitoffset = 6: m1 = 3; s0 = -6; m1 = 254; s1 = 1;		(255 >> 0) >> 6 | (255 << 1) % 256
-		// bitoffset = 7: m1 = 1; s0 = -7; m1 = 255; s1 = 0;		(255 >> 0) >> 7 | (255 << 0) % 256
 
-		if (bs + i <= 8)
-		{
-			m0 = (255 >> (8 - (bs))) << (8 - (bs + i))
-			s0 = 8 - (bs + i);
-		}
-		else
-		{
-			m0 = (255 >> (8 - (bs))) >> ((bs + i) - 8)
-			s0 = 8 - (bs + i);
-			m1 = (255 << (16 - (bs + i))) % 256;
-			s1 = 16 - (bs + i);
-		}
 
-		// console.log(target);
-		// console.log(i);
-		// console.log(bs);
-		// console.log(m0);
-		// console.log(s0);
-
-		var v0,v1;
-		if (s0 > 0) v0 = (target[b] & m0) >> s0;
-		else v0 = (target[b] & m0) << s0;
-		
-		if (s1 > 0) v1 = (target[b+1] & m1) >> s1;
-		else v1 = (target[b+1] & m1) << s1;
-
-		// console.log(v0);
-		// console.log(v1);
-
-		return v0 + (v1 << 8);
+		var vv = (target[b] << 8) + target[b+1];
+		var sh = 16 - (i + bs);
+		var mm = 65535 >> i;
+		vv = vv & mm;
+		vv = vv >> sh;
+		return vv;
 	}
 
 	// bitsize = 10
-	// bitoffset = 0: v0 = v >> 2;	v1 = (v % 4) << 6;				
+	// bitoffset = 0: v0 = v >> 2;	v1 = (v % 4) << 6;
 	// ab cd ef gh | ij 00 00 00 | 00 00 00 00
 	
 	// bitoffset = 1: v0 = v >> 3;	v1 = (v % 8) << 5;				
@@ -404,17 +358,30 @@ var bitpack;
 		var v0 = 0;
 		var v1 = 0;
 		var v2 = 0;
+		var m0 = 255;
+		var m1 = 255;
+		var m2 = 255;
 
+		m0 = 255 - (255 >> i)
 		v0 = v >> (bs + i - 8);
+		
 		if (bs + i <= 16)
 		{
 			v1 = (v % Math.pow(2, bs + i - 8)) << (16 - bs - i);
+			m1 = 255 - ( (255 >> (16 - (bs+i))) << (16 - (bs+i)))
 		}
 		else
 		{
 			v1 = (v >> (bs + i - 16)) % 256;
 			v2 = (v % Math.pow(2, bs + i - 16)) << (24 - bs - i);
+
+			m1 = 0
+			m2 = 255 - (255 >> (24 - (bs + i))) << (24 - (bs + i))
 		}
+
+		target[b] = target[b] & m0;
+		target[b+1] = target[b+1] & m1;
+		target[b+2] = target[b+2] & m2;
 
 		target[b] = target[b] | v0;
 		target[b+1] = target[b+1] | v1;
@@ -424,80 +391,24 @@ var bitpack;
 	function r3(target, o, bs)
 	{
 		var b = Math.floor(o / 8), i = o % 8;
-		var m0 = 255;
-		var m1 = 255;
-		var m2 = 255;
-		var s0 = 0;
-		var s1 = 0;
-		var s2 = 0;
 
-		// bitsize = 10
-		// ab cd ef gh | ij 00 00 00 | 00 00 00 00
-		// 0a bc de fg | hi j0 00 00 | 00 00 00 00
-		// 00 ab cd ef | gh ij 00 00 | 00 00 00 00
-		// 00 0a bc de | fg hi j0 00 | 00 00 00 00
-		// 00 00 ab cd | ef gh ij 00 | 00 00 00 00
-		// 00 00 0a bc | de fg hi j0 | 00 00 00 00
-		// 00 00 00 ab | cd ef gh ij | 00 00 00 00
-		// 00 00 00 0a | bc de fg hi | j0 00 00 00
+		// bitsize = 10 				// bitsize = 17
+		// ab cd ef gh | ij 00 00 00 | 00 00 00 00 	// ab cd ef gh | ij kl mn pq | r0 00 00 00
+		// 0a bc de fg | hi j0 00 00 | 00 00 00 00 	// 0a bc de fg | hi jk lm np | qr 00 00 00
+		// 00 ab cd ef | gh ij 00 00 | 00 00 00 00 	// 00 ab cd ef | gh ij kl mn | pq r0 00 00
+		// 00 0a bc de | fg hi j0 00 | 00 00 00 00 	// 00 0a bc de | fg hi jk lm | np qr 00 00
+		// 00 00 ab cd | ef gh ij 00 | 00 00 00 00 	// 00 00 ab cd | ef gh ij kl | mn pq r0 00
+		// 00 00 0a bc | de fg hi j0 | 00 00 00 00 	// 00 00 0a bc | de fg hi jk | lm np qr 00
+		// 00 00 00 ab | cd ef gh ij | 00 00 00 00 	// 00 00 00 ab | cd ef gh ij | kl mn pq r0
+		// 00 00 00 0a | bc de fg hi | j0 00 00 00 	// 00 00 00 0a | bc de fg hi | jk lm np qr
 
-		// i = 0: m0 = 255; s0 = 0; m1 = 192; s1 = 6;                       (255) >> 0 | (255 >> 6) << 6
-		// i = 1: m0 = 127; s0 = 1; m1 = 224; s1 = 5;                       (255) >> 1 | (255 >> 5) << 5
-		// i = 2: m0 = 63; s0 = 2; m1 = 240; s1 = 4;                        (255) >> 2 | (255 >> 4) << 4
-		// i = 3: m0 = 31; s0 = 3; m1 = 248; s1 = 3;                        (255) >> 3 | (255 >> 3) << 3
-		// i = 4: m0 = 15; s0 = 4; m1 = 252; s1 = 2;                        (255) >> 4 | (255 >> 2) << 2
-		// i = 5: m0 = 7; s0 = 5;  m1 = 254; s1 = 1;                        (255) >> 5 | (255 >> 1) << 1
-		// i = 6: m0 = 3; s0 = 6;  m1 = 255; s1 = 0;                        (255) >> 6 | (255 >> 0) << 0
-		// i = 7: m0 = 1; s0 = 7;  m1 = 255; s1 = 0;  m2 = 128; s2 = 7;     (255) >> 7 | (255 >> 0) << 0    (255 >> 7) << 7
-
-		// bitsize = 17
-		// ab cd ef gh | ij kl mn pq | r0 00 00 00
-		// 0a bc de fg | hi jk lm np | qr 00 00 00
-		// 00 ab cd ef | gh ij kl mn | pq r0 00 00
-		// 00 0a bc de | fg hi jk lm | np qr 00 00
-		// 00 00 ab cd | ef gh ij kl | mn pq r0 00
-		// 00 00 0a bc | de fg hi jk | lm np qr 00
-		// 00 00 00 ab | cd ef gh ij | kl mn pq r0
-		// 00 00 00 0a | bc de fg hi | jk lm np qr
-
-		// i = 0: m0 = 255; s0 = 0; m1 = 255; s1 = 0;  m2 = 128; s2 = 7; 	(255) >> 0 | 255 | (255 >> 7) << 7
-		// i = 1: m0 = 127; s0 = 1; m1 = 255; s1 = 0;  m2 = 192; s2 = 6; 	(255) >> 1 | 255 | (255 >> 6) << 6
-		// i = 2: m0 = 63; s0 = 2;  m1 = 255; s1 = 0;  m2 = 224; s2 = 5; 	(255) >> 2 | 255 | (255 >> 5) << 5
-		// i = 3: m0 = 31; s0 = 3;  m1 = 255; s1 = 0;  m2 = 240; s2 = 4; 	(255) >> 3 | 255 | (255 >> 4) << 4
-		// i = 4: m0 = 15; s0 = 4;  m1 = 255; s1 = 0;  m2 = 248; s2 = 3; 	(255) >> 4 | 255 | (255 >> 3) << 3
-		// i = 5: m0 = 7; s0 = 5;   m1 = 255; s1 = 0;  m2 = 252; s2 = 2; 	(255) >> 5 | 255 | (255 >> 2) << 2
-		// i = 6: m0 = 3; s0 = 6;   m1 = 255; s1 = 0;  m2 = 254; s2 = 1; 	(255) >> 6 | 255 | (255 >> 1) << 1
-		// i = 7: m0 = 1; s0 = 7;   m1 = 255; s1 = 0;  m2 = 255; s2 = 0; 	(255) >> 7 | 255 | (255 >> 0) << 0
-
-		m0 = (255 >> i)
-		s0 = i
-
-		if (bs + i <= 16)
-		{
-			m1 = (255 >> (16 - (bs+i))) >> (16 - (bs+i))
-			s1 = 16 - (bs+i)
-		}
-		else
-		{
-			m1 = 255
-			s1 = 0
-			m2 = (255 >> (24 - (bs + i))) << (24 - (bs + i))
-			s2 = 24 - (bs+i)
-		}
-
-		var v0, v1, v2;
-		if (s0 > 0) v0 = (target[b] & m0) >> s0;
-		else v0 = (target[b] & m0) << s0;
-		
-		if (s1 > 0) v1 = (target[b+1] & m1) >> s1;
-		else v1 = (target[b+1] & m1) << s1;
-
-		if (s2 > 0) v2 = (target[b+2] & m2) >> s2;
-		else v2 = (target[b+2] & m2) << s2;
-
-		return (v0 << 16) + (v1 << 8) + v2;
+		var vv = (target[b] << 16) + (target[b+1] << 8) + target[b+2];
+		var sh = 24 - (i + bs);
+		var mm = 16777215 >> i;
+		vv = vv & mm;
+		vv = vv >> sh;
+		return vv;
 	}
-
 
 	// bitsize = 18
 
@@ -547,19 +458,35 @@ var bitpack;
 		var v1 = 0;
 		var v2 = 0;
 		var v3 = 0;
+		var m0 = 255;
+		var m1 = 255;
+		var m2 = 255;
+		var m3 = 255;		
 
 		v0 = v >> (bs + i - 8);
 		v1 = (v >> (bs + i - 16)) % 256;
 
+		m0 = 255 - (255 >> i);
+		m1 = 0;
+
 		if (bs + i <= 24)
 		{
 			v2 = (v % Math.pow(2, bs + i - 8)) << (16 - bs - i);
+			m2 = 255 - (255 >> (24 - (bs + i))) << (24 - (bs + i));
 		}
 		else
 		{
 			v2 = (v >> (bs + i - 24)) % 256;
 			v3 = (v % Math.pow(2, bs + i - 24)) << (32 - bs - i);
+
+			m2 = 0;
+			m3 = 255 - (255 >> (32 - (bs + i))) << (32 - (bs + i));
 		}
+
+		target[b] = target[b] & m0;
+		target[b+1] = target[b+1] & m1;
+		target[b+2] = target[b+2] & m2;
+		target[b+3] = target[b+3] & m3;
 
 		target[b] = target[b] | v0;
 		target[b+1] = target[b+1] | v1;
@@ -570,80 +497,34 @@ var bitpack;
 	function r4(target, o, bs)
 	{
 		var b = Math.floor(o / 8), i = o % 8;
-		var m0 = 255;
-		var m1 = 255;
-		var m2 = 255;
-		var m3 = 255;
-		var s0 = 0;
-		var s1 = 0;
-		var s2 = 0;
-		var s3 = 0;
-
-		// bitsize = 18
-
-		// ab cd ef gh | ij kl mn pq | rs 00 00 00 | 00 00 00 00
+		// bitsize = 18							// bitsize = 25
+		// ab cd ef gh | ij kl mn pq | rs 00 00 00 | 00 00 00 00	// ab cd ef gh | ij kl mn pq | rs tu vw xy | z0 00 00 00
 		// 0a bc de fg | hi jk lm np | qr s0 00 00 | 00 00 00 00
 		// 00 ab cd ef | gh ij kl mn | pq rs 00 00 | 00 00 00 00
 		// 00 0a bc de | fg hi jk lm | np qr s0 00 | 00 00 00 00
 		// 00 00 ab cd | ef gh ij kl | mn pq rs 00 | 00 00 00 00
 		// 00 00 0a bc | de fg hi jk | lm np qr s0 | 00 00 00 00
 		// 00 00 00 ab | cd ef gh ij | kl mn pq rs | 00 00 00 00
-		// 00 00 00 0a | bc de fg hi | jk lm np qr | s0 00 00 00
+		// 00 00 00 0a | bc de fg hi | jk lm np qr | s0 00 00 00	// 00 00 00 0a | bc de fg hi | jk lm np qr | st uv wx yz
 
-		// i = 0: m0 = 255; s0 = 0; 	m1= 255; s1 = 0; m2 = 192; s2 = 6;                        (255) >> 0 | 255| (255 >> 6) << 6
-		// i = 1: m0 = 127; s0 = 1; 	m1= 255; s1 = 0; m2 = 224; s2 = 5;                        (255) >> 1 | 255| (255 >> 5) << 5
-		// i = 2: m0 = 63; s0 = 2; 	m1= 255; s1 = 0; m2 = 240; s2 = 4;                        (255) >> 2 | 255| (255 >> 4) << 4
-		// i = 3: m0 = 31; s0 = 3; 	m1= 255; s1 = 0; m2 = 248; s2 = 3;                        (255) >> 3 | 255| (255 >> 3) << 3
-		// i = 4: m0 = 15; s0 = 4; 	m1= 255; s1 = 0; m2 = 252; s2 = 2;                        (255) >> 4 | 255| (255 >> 2) << 2
-		// i = 5: m0 = 7; s0 = 5; 	m1= 255; s1 = 0; m2 = 254; s2 = 1;                        (255) >> 5 | 255| (255 >> 1) << 1
-		// i = 6: m0 = 3; s0 = 6; 	m1= 255; s1 = 0; m2 = 255; s2 = 0;                        (255) >> 6 | 255| (255 >> 0) << 0
-		// i = 7: m0 = 1; s0 = 7; 	m1= 255; s1 = 0; m2 = 255; s2 = 0;  m3 = 128; s3 = 7;     (255) >> 7 | 255| (255 >> 0) << 0    (255 >> 7) << 7
 
-		// bitsize = 25
-		// ab cd ef gh | ij kl mn pq | rs tu vw xy | z0 00 00 00
-		// 00 00 00 0a | bc de fg hi | jk lm np qr | st uv wx yz
+		// note that in javascript, 'Bitwise operators treat their operands as a sequence of 32 bits'
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Bitwise_Operators
 
-		// i = 0: m0 = 255; s0 = 0; m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 128; s3 = 7; 	(255) >> 0 | 255 | 255 | (255 >> 7) << 7
-		// i = 1: m0 = 127; s0 = 1; m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 192; s3 = 6; 	(255) >> 1 | 255 | 255 | (255 >> 6) << 6
-		// i = 2: m0 = 63; s0 = 2;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 224; s3 = 5; 	(255) >> 2 | 255 | 255 | (255 >> 5) << 5
-		// i = 3: m0 = 31; s0 = 3;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 240; s3 = 4; 	(255) >> 3 | 255 | 255 | (255 >> 4) << 4
-		// i = 4: m0 = 15; s0 = 4;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 248; s3 = 3; 	(255) >> 4 | 255 | 255 | (255 >> 3) << 3
-		// i = 5: m0 = 7; s0 = 5;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 252; s3 = 2; 	(255) >> 5 | 255 | 255 | (255 >> 2) << 2
-		// i = 6: m0 = 3; s0 = 6;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 254; s3 = 1; 	(255) >> 6 | 255 | 255 | (255 >> 1) << 1
-		// i = 7: m0 = 1; s0 = 7;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 255; s3 = 0; 	(255) >> 7 | 255 | 255 | (255 >> 0) << 0
+		var vv = ((target[b] << 22) * 4) + (target[b+1] << 16) + (target[b+2] << 8 ) + target[b+1];
+		if ((vv > 2147483648) && i > 0) vv -= 2147483648; // 2147483648 -> 2^31 
+		if ((vv > 1073741824) && i > 1) vv -= 1073741824; // 1073741824 -> 2^30 
+		if ((vv > 536870912) && i > 2) vv -= 536870912; // 536870912 -> 2^29 
+		if ((vv > 268435456) && i > 3) vv -= 268435456; // 268435456 -> 2^28 
+		if ((vv > 134217728) && i > 4) vv -= 134217728; // 134217728 -> 2^27 
+		if ((vv > 67108864) && i > 5) vv -= 67108864; // 67108864 -> 2^26 
+		if ((vv > 33554432) && i > 6) vv -= 33554432; // 33554432 -> 2^25 
 
-		m0 = (255 >> i)
-		s0 = i
-		m1 = 255
-		s1 = 0
+		var sh = 32 - (i + bs);
+		vv = (vv / (1 << sh)) | 0;
 
-		if (bs + i <= 24)
-		{
-			m2 = (255 >> (24 - (bs+i))) >> (24 - (bs+i))
-			s2 = 24 - (bs+i)
-		}
-		else
-		{
-			m2 = 255
-			s2 = 0
-			m3 = (255 >> (32 - (bs + i))) << (32 - (bs + i))
-			s3 = 32 - (bs+i)
-		}
+		return vv;
 
-		var v0, v1, v2, v3;
-		if (s0 > 0) v0 = (target[b] & m0) >> s0;
-		else v0 = (target[b] & m0) << s0;
-		
-		if (s1 > 0) v1 = (target[b+1] & m1) >> s1;
-		else v1 = (target[b+1] & m1) << s1;
-
-		if (s2 > 0) v2 = (target[b+2] & m2) >> s2;
-		else v2 = (target[b+2] & m2) << s2;
-
-		if (s3 > 0) v3 = (target[b+3] & m3) >> s3;
-		else v3 = (target[b+3] & m3) << s3;
-
-		return (v0 << 24) + (v1 << 16) + (v2 << 8) + v3;
 	}
 })(bitpack || (bitpack = {}));
 
@@ -680,8 +561,8 @@ test();
 function test()
 {
 	var counter = 0;
-	var target = new Uint8Array(16);
-	for (var bs=1;bs<3;bs++)
+	var target = new Uint8Array(4);
+	for (var bs=1;bs<26;bs++)
 	{
 		for (var v=0;v<Math.pow(2,bs);v++)
 		{
@@ -692,15 +573,22 @@ function test()
 				if (v == v2)
 				{
 					counter++;
-					console.log("ok");
+					if (counter % 100000 == 0)
+						console.log("-------ok------- " + counter);
+
+					// console.log("value written " + v);
+					// console.log("bitsize " + bs);
+					// console.log("offset " + offset);
+					// console.log("value read " + v2);
+					// console.log("-------ok-------");
 				}
 				else
 				{
-					console.log("fail");
+					console.log("failed at " + counter);
 					console.log("value written " + v);
-					console.log("value read " + v2);
 					console.log("bitsize " + bs);
 					console.log("offset " + offset);
+					console.log("value read " + v2);
 
 					visualizeArray(target);
 					process.exit();
