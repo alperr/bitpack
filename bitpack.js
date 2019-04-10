@@ -50,6 +50,7 @@ var bitpack;
 		var m = 1 << (7 - i);
 		var s = 7 - i;
 
+
 		// switch(i)
 		// {
 		// 	case 0: m = 128; s = 7; break;
@@ -238,6 +239,12 @@ var bitpack;
 			s1 = 16 - (bs + i);
 		}
 
+		// console.log(target);
+		// console.log(i);
+		// console.log(bs);
+		// console.log(m0);
+		// console.log(s0);
+
 		var v0,v1;
 		if (s0 > 0) v0 = (target[b] & m0) >> s0;
 		else v0 = (target[b] & m0) << s0;
@@ -245,7 +252,10 @@ var bitpack;
 		if (s1 > 0) v1 = (target[b+1] & m1) >> s1;
 		else v1 = (target[b+1] & m1) << s1;
 
-		return (v0 << 8) + v1;
+		// console.log(v0);
+		// console.log(v1);
+
+		return v0 + (v1 << 8);
 	}
 
 	// bitsize = 10
@@ -594,42 +604,44 @@ var bitpack;
 		// 00 00 00 ab | cd ef gh ij | kl mn pq rs | 00 00 00 00
 		// 00 00 00 0a | bc de fg hi | jk lm np qr | s0 00 00 00
 
-		// i = 0: m0 = 255; s0 = 0; m1 = 192; s1 = 6;                       (255) >> 0 | (255 >> 6) << 6
-		// i = 1: m0 = 127; s0 = 1; m1 = 224; s1 = 5;                       (255) >> 1 | (255 >> 5) << 5
-		// i = 2: m0 = 63; s0 = 2; m1 = 240; s1 = 4;                        (255) >> 2 | (255 >> 4) << 4
-		// i = 3: m0 = 31; s0 = 3; m1 = 248; s1 = 3;                        (255) >> 3 | (255 >> 3) << 3
-		// i = 4: m0 = 15; s0 = 4; m1 = 252; s1 = 2;                        (255) >> 4 | (255 >> 2) << 2
-		// i = 5: m0 = 7; s0 = 5;  m1 = 254; s1 = 1;                        (255) >> 5 | (255 >> 1) << 1
-		// i = 6: m0 = 3; s0 = 6;  m1 = 255; s1 = 0;                        (255) >> 6 | (255 >> 0) << 0
-		// i = 7: m0 = 1; s0 = 7;  m1 = 255; s1 = 0;  m2 = 128; s2 = 7;     (255) >> 7 | (255 >> 0) << 0    (255 >> 7) << 7
+		// i = 0: m0 = 255; s0 = 0; 	m1= 255; s1 = 0; m2 = 192; s2 = 6;                        (255) >> 0 | 255| (255 >> 6) << 6
+		// i = 1: m0 = 127; s0 = 1; 	m1= 255; s1 = 0; m2 = 224; s2 = 5;                        (255) >> 1 | 255| (255 >> 5) << 5
+		// i = 2: m0 = 63; s0 = 2; 	m1= 255; s1 = 0; m2 = 240; s2 = 4;                        (255) >> 2 | 255| (255 >> 4) << 4
+		// i = 3: m0 = 31; s0 = 3; 	m1= 255; s1 = 0; m2 = 248; s2 = 3;                        (255) >> 3 | 255| (255 >> 3) << 3
+		// i = 4: m0 = 15; s0 = 4; 	m1= 255; s1 = 0; m2 = 252; s2 = 2;                        (255) >> 4 | 255| (255 >> 2) << 2
+		// i = 5: m0 = 7; s0 = 5; 	m1= 255; s1 = 0; m2 = 254; s2 = 1;                        (255) >> 5 | 255| (255 >> 1) << 1
+		// i = 6: m0 = 3; s0 = 6; 	m1= 255; s1 = 0; m2 = 255; s2 = 0;                        (255) >> 6 | 255| (255 >> 0) << 0
+		// i = 7: m0 = 1; s0 = 7; 	m1= 255; s1 = 0; m2 = 255; s2 = 0;  m3 = 128; s3 = 7;     (255) >> 7 | 255| (255 >> 0) << 0    (255 >> 7) << 7
 
 		// bitsize = 25
 		// ab cd ef gh | ij kl mn pq | rs tu vw xy | z0 00 00 00
 		// 00 00 00 0a | bc de fg hi | jk lm np qr | st uv wx yz
 
-		// i = 0: m0 = 255; s0 = 0; m1 = 255; s1 = 0;  m2 = 128; s2 = 7; 	(255) >> 0 | 255 | (255 >> 7) << 7
-		// i = 1: m0 = 127; s0 = 1; m1 = 255; s1 = 0;  m2 = 192; s2 = 6; 	(255) >> 1 | 255 | (255 >> 6) << 6
-		// i = 2: m0 = 63; s0 = 2;  m1 = 255; s1 = 0;  m2 = 224; s2 = 5; 	(255) >> 2 | 255 | (255 >> 5) << 5
-		// i = 3: m0 = 31; s0 = 3;  m1 = 255; s1 = 0;  m2 = 240; s2 = 4; 	(255) >> 3 | 255 | (255 >> 4) << 4
-		// i = 4: m0 = 15; s0 = 4;  m1 = 255; s1 = 0;  m2 = 248; s2 = 3; 	(255) >> 4 | 255 | (255 >> 3) << 3
-		// i = 5: m0 = 7; s0 = 5;   m1 = 255; s1 = 0;  m2 = 252; s2 = 2; 	(255) >> 5 | 255 | (255 >> 2) << 2
-		// i = 6: m0 = 3; s0 = 6;   m1 = 255; s1 = 0;  m2 = 254; s2 = 1; 	(255) >> 6 | 255 | (255 >> 1) << 1
-		// i = 7: m0 = 1; s0 = 7;   m1 = 255; s1 = 0;  m2 = 255; s2 = 0; 	(255) >> 7 | 255 | (255 >> 0) << 0
+		// i = 0: m0 = 255; s0 = 0; m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 128; s3 = 7; 	(255) >> 0 | 255 | 255 | (255 >> 7) << 7
+		// i = 1: m0 = 127; s0 = 1; m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 192; s3 = 6; 	(255) >> 1 | 255 | 255 | (255 >> 6) << 6
+		// i = 2: m0 = 63; s0 = 2;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 224; s3 = 5; 	(255) >> 2 | 255 | 255 | (255 >> 5) << 5
+		// i = 3: m0 = 31; s0 = 3;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 240; s3 = 4; 	(255) >> 3 | 255 | 255 | (255 >> 4) << 4
+		// i = 4: m0 = 15; s0 = 4;  m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 248; s3 = 3; 	(255) >> 4 | 255 | 255 | (255 >> 3) << 3
+		// i = 5: m0 = 7; s0 = 5;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 252; s3 = 2; 	(255) >> 5 | 255 | 255 | (255 >> 2) << 2
+		// i = 6: m0 = 3; s0 = 6;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 254; s3 = 1; 	(255) >> 6 | 255 | 255 | (255 >> 1) << 1
+		// i = 7: m0 = 1; s0 = 7;   m1 = 255; s1 = 0; m2 = 255; s2 = 0; m3 = 255; s3 = 0; 	(255) >> 7 | 255 | 255 | (255 >> 0) << 0
 
 		m0 = (255 >> i)
 		s0 = i
+		m1 = 255
+		s1 = 0
 
-		if (bs + i <= 16)
+		if (bs + i <= 24)
 		{
-			m1 = (255 >> (16 - (bs+i))) >> (16 - (bs+i))
-			s1 = 16 - (bs+i)
+			m2 = (255 >> (24 - (bs+i))) >> (24 - (bs+i))
+			s2 = 24 - (bs+i)
 		}
 		else
 		{
-			m1 = 255
-			s1 = 0
-			m2 = (255 >> (24 - (bs + i))) << (24 - (bs + i))
-			s2 = 24 - (bs+i)
+			m2 = 255
+			s2 = 0
+			m3 = (255 >> (32 - (bs + i))) << (32 - (bs + i))
+			s3 = 32 - (bs+i)
 		}
 
 		var v0, v1, v2, v3;
@@ -653,11 +665,18 @@ var target = new Uint8Array(4);
 // bitpack.write(target, 509, 0, 9);
 bitpack.write(target, 7, 0, 3);
 bitpack.write(target, 5, 3, 3);
-console.log(target);
 
-for (var i=0;i<4;i++)
-	visualize(target[i]);
+var v = bitpack.read(target, 0, 3);
+// console.log(target);
+console.log(v);
 
+// for (var i=0;i<4;i++) visualize(target[i]);
+
+
+function visualizeArray(arr)
+{
+	for (var i=0;i<arr.length;i++) visualize(arr[i]);
+}
 function visualize(byte)
 {
 	var s = "";
@@ -668,4 +687,37 @@ function visualize(byte)
 		s = s + "" + ((byte & Math.pow(2, i)) / Math.pow(2, i));
 	}
 	console.log(s);
+}
+
+test();
+
+function test()
+{
+	var target = new Uint8Array(16);
+	for (var bs=1;bs<3;bs++)
+	{
+		for (var v=0;v<Math.pow(2,bs);v++)
+		{
+			for (var offset=0;offset<8;offset++)
+			{
+				bitpack.write(target, v, offset, bs);
+				var v2 = bitpack.read(target, offset, bs);
+				if (v == v2)
+				{
+					console.log("ok");
+				}
+				else
+				{
+					console.log("fail");
+					console.log("value written " + v);
+					console.log("value read " + v2);
+					console.log("bitsize " + bs);
+					console.log("offset " + offset);
+
+					visualizeArray(target);
+					process.exit();
+				}
+			}
+		}
+	}
 }
