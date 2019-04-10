@@ -528,7 +528,6 @@ var bitpack;
 	}
 })(bitpack || (bitpack = {}));
 
-
 function bitstream(stream)
 {
 	var self = this;
@@ -548,4 +547,10 @@ function bitstream(stream)
 		bitpack.write(self.stream, value, self.writeCursor, bitsize);
 		self.writeCursor += bitsize;
 	}
+}
+
+if (typeof window === 'undefined')
+{
+	exports.bitpack = bitpack;
+	exports.bitstream = bitstream;
 }

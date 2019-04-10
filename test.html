@@ -14,7 +14,7 @@ function main()
 {
 	var s = new bitstream(new Uint8Array(16));
 	s.write(65781, 17);
-	s.write(0, 12);
+	s.write(4, 12);
 	s.write(1032, 14);
 
 	console.log(s.read(17));
