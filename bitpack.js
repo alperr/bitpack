@@ -527,3 +527,25 @@ var bitpack;
 
 	}
 })(bitpack || (bitpack = {}));
+
+
+function bitstream(stream)
+{
+	var self = this;
+	self.stream = stream;
+	self.readCursor = 0;
+	self.writeCursor = 0;
+
+	self.read = function(bitsize)
+	{
+		var v = bitpack.read(self.stream, self.readCursor, bitsize);
+		self.readCursor += bitsize;
+		return v;
+	}
+
+	self.write = function(value, bitsize)
+	{
+		bitpack.write(self.stream, value, self.writeCursor, bitsize);
+		self.writeCursor += bitsize;
+	}
+}
