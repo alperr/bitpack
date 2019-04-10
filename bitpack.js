@@ -26,14 +26,14 @@ var bitpack;
 	bitpack.write = write;
 	bitpack.read = read;
 
-	// bittofset = 0: v0 = v << 7;	// x0 00 00 00
-	// bittofset = 1: v0 = v << 6;	// 0x 00 00 00
-	// bittofset = 2: v0 = v << 5;	// 00 x0 00 00
-	// bittofset = 3: v0 = v << 4;	// 00 0x 00 00
-	// bittofset = 4: v0 = v << 3;	// 00 00 x0 00
-	// bittofset = 5: v0 = v << 2;	// 00 00 0x 00
-	// bittofset = 6: v0 = v << 1;	// 00 00 00 x0
-	// bittofset = 7: v0 = v << 0;	// 00 00 00 0x
+	// bitofset = 0: v0 = v << 7;	m0 = 127 // x0 00 00 00   |   0x xx xx xx
+	// bitofset = 1: v0 = v << 6;	m0 = 191 // 0x 00 00 00   |   x0 xx xx xx
+	// bitofset = 2: v0 = v << 5;	m0 = 223 // 00 x0 00 00   |   xx 0x xx xx
+	// bitofset = 3: v0 = v << 4;	m0 = 239 // 00 0x 00 00   |   xx x0 xx xx
+	// bitofset = 4: v0 = v << 3;	m0 = 247 // 00 00 x0 00   |   xx xx 0x xx
+	// bitofset = 5: v0 = v << 2;	m0 = 251 // 00 00 0x 00   |   xx xx x0 xx
+	// bitofset = 6: v0 = v << 1;	m0 = 253 // 00 00 00 x0   |   xx xx xx 0x
+	// bitofset = 7: v0 = v << 0;	m0 = 254 // 00 00 00 0x   |   xx xx xx x0
 
 	// b -> byte offset
 	// i -> bit offset
@@ -41,6 +41,9 @@ var bitpack;
 	{
 		var b = Math.floor(o / 8), i = o % 8;
 		var v0 = v << (7 - i);
+		var m0 = 255 - (1 << (7 - i));
+
+		target[b] = target[b] & m0;
 		target[b] = target[b] | v0;
 	}
 
@@ -50,81 +53,60 @@ var bitpack;
 		var m = 1 << (7 - i);
 		var s = 7 - i;
 
-
-		// switch(i)
-		// {
-		// 	case 0: m = 128; s = 7; break;
-		// 	case 1: m = 64; s = 6; break;
-		// 	case 2: m = 32; s = 5; break;
-		// 	case 3: m = 16; s = 4; break;
-		// 	case 4: m = 8; s = 3; break;
-		// 	case 5: m = 4; s = 2; break;
-		// 	case 6: m = 2; s = 1; break;
-		// 	case 7: m = 1; s = 0; break;
-		// }
-
 		return (target[b] & m) >> s;
 	}
 
 	// bitsize = 2
-	// bitoffset = 0: v0 = v << 6;				// xy 00 00 00
-	// bitoffset = 1: v0 = v << 5;				// 0x y0 00 00
-	// bitoffset = 2: v0 = v << 4;				// 00 xy 00 00
-	// bitoffset = 3: v0 = v << 3;				// 00 0x y0 00
-	// bitoffset = 4: v0 = v << 2;				// 00 00 xy 00
-	// bitoffset = 5: v0 = v << 1;				// 00 00 0x y0
-	// bitoffset = 6: v0 = v << 0;				// 00 00 00 xy
-	// bitoffset = 7: v0 = v >> 1;	v1 = (v % 2) << 7;	// 00 00 00 0x | y0 00 00 00
+	// bitoffset = 0: v0 = v << 6;	m0 = 63					// xy 00 00 00
+	// bitoffset = 1: v0 = v << 5;	m0 = 159				// 0x y0 00 00
+	// bitoffset = 2: v0 = v << 4;	m0 = 207				// 00 xy 00 00
+	// bitoffset = 3: v0 = v << 3;	m0 = 231				// 00 0x y0 00
+	// bitoffset = 4: v0 = v << 2;	m0 = 243				// 00 00 xy 00
+	// bitoffset = 5: v0 = v << 1;	m0 = 249				// 00 00 0x y0
+	// bitoffset = 6: v0 = v << 0;	m0 = 252				// 00 00 00 xy
+	// bitoffset = 7: v0 = v >> 1;	m0 = 254 v1 = (v % 2) << 7; m1 = 127	// 00 00 00 0x | y0 00 00 00
 
 	// bitsize = 3
-	// bitoffset = 0: v0 = v << 5;				// xy z0 00 00
-	// bitoffset = 1: v0 = v << 4;				// 0x yz 00 00
-	// bitoffset = 2: v0 = v << 3;				// 00 xy z0 00
-	// bitoffset = 3: v0 = v << 2;				// 00 0x yz 00
-	// bitoffset = 4: v0 = v << 1;				// 00 00 xy z0
-	// bitoffset = 5: v0 = v << 0;				// 00 00 0x yz
-	// bitoffset = 6: v0 = v >> 1; v1 = (v % 2) << 7;	// 00 00 00 xy | z0 00 00 00
-	// bitoffset = 7: v0 = v >> 2; v1 = (v % 4) << 6;	// 00 00 00 0x | yz 00 00 00
+	// bitoffset = 0: v0 = v << 5; m0 = 31					// xy z0 00 00
+	// bitoffset = 1: v0 = v << 4; m0 = 143					// 0x yz 00 00
+	// bitoffset = 2: v0 = v << 3; m0 = 199					// 00 xy z0 00
+	// bitoffset = 3: v0 = v << 2; m0 = 227					// 00 0x yz 00
+	// bitoffset = 4: v0 = v << 1; m0 = 241					// 00 00 xy z0
+	// bitoffset = 5: v0 = v << 0; m0 = 248					// 00 00 0x yz
+	// bitoffset = 6: v0 = v >> 1; m0 = 252 v1 = (v % 2) << 7; m1 = 127	// 00 00 00 xy | z0 00 00 00
+	// bitoffset = 7: v0 = v >> 2; m0 = 254 v1 = (v % 4) << 6; m1 = 63	// 00 00 00 0x | yz 00 00 00
 
 	// bitsize = 4
-	// bitoffset = 0: v0 = v << 4;				// xy zt 00 00
-	// bitoffset = 1: v0 = v << 3;				// 0x yz t0 00
-	// bitoffset = 2: v0 = v << 2;				// 00 xy zt 00
-	// bitoffset = 3: v0 = v << 1;				// 00 0x yz t0
-	// bitoffset = 4: v0 = v << 0;				// 00 00 xy zt
-	// bitoffset = 5: v0 = v >> 1; v1 = (v % 2) << 7;	// 00 00 0x yz | t0 00 00 00
-	// bitoffset = 6: v0 = v >> 2; v1 = (v % 4) << 6;	// 00 00 00 xy | zt 00 00 00
-	// bitoffset = 7: v0 = v >> 3; v1 = (v % 8) << 5;	// 00 00 00 0x | yz t0 00 00
+	// bitoffset = 0: v0 = v << 4;	m0 = 15					// xy zt 00 00
+	// bitoffset = 1: v0 = v << 3;	m0 = 135				// 0x yz t0 00
+	// bitoffset = 2: v0 = v << 2;	m0 = 195				// 00 xy zt 00
+	// bitoffset = 3: v0 = v << 1;	m0 = 225				// 00 0x yz t0
+	// bitoffset = 4: v0 = v << 0;	m0 = 240				// 00 00 xy zt
+	// bitoffset = 5: v0 = v >> 1;	m0 = 248 v1 = (v % 2) << 7; m1 = 127	// 00 00 0x yz | t0 00 00 00
+	// bitoffset = 6: v0 = v >> 2;	m0 = 252 v1 = (v % 4) << 6; m1 = 63	// 00 00 00 xy | zt 00 00 00
+	// bitoffset = 7: v0 = v >> 3;	m0 = 254 v1 = (v % 8) << 5; m1 = 31	// 00 00 00 0x | yz t0 00 00
 
-	// bitsize = 5
-	// bitoffset = 0: v0 = v << 3;				// xy zt u0 00
-	// bitoffset = 1: v0 = v << 2;				// 0x yz tu 00
-	// bitoffset = 2: v0 = v << 1;				// 00 xy zt u0
-	// bitoffset = 3: v0 = v << 0;				// 00 0x yz tu
-	// bitoffset = 4: v0 = v >> 1; v1 = (v % 2) << 7;	// 00 00 xy zt | u0 00 00 00
-	// bitoffset = 5: v0 = v >> 2; v1 = (v % 4) << 6;	// 00 00 0x yz | tu 00 00 00
-	// bitoffset = 6: v0 = v >> 3; v1 = (v % 8) << 5;	// 00 00 00 xy | zt u0 00 00
-	// bitoffset = 7: v0 = v >> 4; v1 = (v % 16) << 4;	// 00 00 00 0x | yz tu 00 00
-	
 	// ...
 	// ..
 	// this goes up to bitsize = 9
 
 	// bitsize = 9
-	// bitoffset = 0: v0 = v >> 1;	v1 = (v % 2) << 7; 	// ab cd ef gh | i0 00 00 00
-	// bitoffset = 1: v0 = v >> 2;	v1 = (v % 4) << 6; 	// 0a bc de fg | hi 00 00 00
-	// bitoffset = 2: v0 = v >> 3;	v1 = (v % 8) << 5; 	// 00 ab cd ef | gh i0 00 00
-	// bitoffset = 3: v0 = v >> 4;	v1 = (v % 16) << 4;	// 00 0a bc de | fg hi 00 00
-	// bitoffset = 4: v0 = v >> 5;	v1 = (v % 32) << 3; 	// 00 00 ab cd | ef gh i0 00
-	// bitoffset = 5: v0 = v >> 6;	v1 = (v % 64) << 2;	// 00 00 0a bc | de fg hi 00
-	// bitoffset = 6: v0 = v >> 7;	v1 = (v % 128) << 1; 	// 00 00 00 ab | cd ef gh i0
-	// bitoffset = 7: v0 = v >> 8;	v1 = (v % 256) << 0;	// 00 00 00 0a | bc de fg hi
+	// bitoffset = 0: v0 = v >> 1;	m0 = 0	 v1 = (v % 2) << 7; m1 = 127 	// ab cd ef gh | i0 00 00 00
+	// bitoffset = 1: v0 = v >> 2;	m0 = 128 v1 = (v % 4) << 6; m1 = 63 	// 0a bc de fg | hi 00 00 00
+	// bitoffset = 2: v0 = v >> 3;	m0 = 192 v1 = (v % 8) << 5; m1 = 31 	// 00 ab cd ef | gh i0 00 00
+	// bitoffset = 3: v0 = v >> 4;	m0 = 224 v1 = (v % 16) << 4; m1 = 15	// 00 0a bc de | fg hi 00 00
+	// bitoffset = 4: v0 = v >> 5;	m0 = 240 v1 = (v % 32) << 3; m1 = 7	// 00 00 ab cd | ef gh i0 00
+	// bitoffset = 5: v0 = v >> 6;	m0 = 248 v1 = (v % 64) << 2; m1 = 3	// 00 00 0a bc | de fg hi 00
+	// bitoffset = 6: v0 = v >> 7;	m0 = 252 v1 = (v % 128) << 1; m1 = 1	// 00 00 00 ab | cd ef gh i0
+	// bitoffset = 7: v0 = v >> 8;	m0 = 254 v1 = (v % 256) << 0; m1 = 0	// 00 00 00 0a | bc de fg hi
 
 	function w2(target, v, o, bs)
 	{
 		var b = Math.floor(o / 8), i = o % 8;
 		var v0 = 0;
 		var v1 = 0;
+		var m0 = 255;
+		var m1 = 255;
 
 		if (bs + i <= 8)
 		{
@@ -135,6 +117,10 @@ var bitpack;
 			v0 = v >> (bs + i - 8);
 			v1 = (v % Math.pow(2, (bs + i - 8))) << (16 - bs - i);
 		}
+
+		target[b] = target[b] & m0;
+		target[b+1] = target[b+1] & m1;
+
 		target[b] = target[b] | v0;
 		target[b+1] = target[b+1] | v1;
 	}
@@ -693,6 +679,7 @@ test();
 
 function test()
 {
+	var counter = 0;
 	var target = new Uint8Array(16);
 	for (var bs=1;bs<3;bs++)
 	{
@@ -704,6 +691,7 @@ function test()
 				var v2 = bitpack.read(target, offset, bs);
 				if (v == v2)
 				{
+					counter++;
 					console.log("ok");
 				}
 				else
