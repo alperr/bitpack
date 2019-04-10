@@ -461,7 +461,7 @@ var bitpack;
 		var m0 = 255;
 		var m1 = 255;
 		var m2 = 255;
-		var m3 = 255;		
+		var m3 = 255;
 
 		v0 = v >> (bs + i - 8);
 		v1 = (v >> (bs + i - 16)) % 256;
@@ -471,8 +471,8 @@ var bitpack;
 
 		if (bs + i <= 24)
 		{
-			v2 = (v % Math.pow(2, bs + i - 8)) << (16 - bs - i);
-			m2 = 255 - (255 >> (24 - (bs + i))) << (24 - (bs + i));
+			v2 = (v % Math.pow(2, bs + i - 8)) << (24 - bs - i);
+			m2 = 255 - ((255 >> (24 - bs - i))  << (24 - bs - i));
 		}
 		else
 		{
@@ -480,7 +480,7 @@ var bitpack;
 			v3 = (v % Math.pow(2, bs + i - 24)) << (32 - bs - i);
 
 			m2 = 0;
-			m3 = 255 - (255 >> (32 - (bs + i))) << (32 - (bs + i));
+			m3 = 255 - ((255 >> (32 - (bs + i))) << (32 - (bs + i)));
 		}
 
 		target[b] = target[b] & m0;
@@ -511,7 +511,7 @@ var bitpack;
 		// note that in javascript, 'Bitwise operators treat their operands as a sequence of 32 bits'
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Bitwise_Operators
 
-		var vv = ((target[b] << 22) * 4) + (target[b+1] << 16) + (target[b+2] << 8 ) + target[b+1];
+		var vv = ((target[b] << 22) * 4) + (target[b+1] << 16) + (target[b+2] << 8 ) + target[b+3];
 		if ((vv > 2147483648) && i > 0) vv -= 2147483648; // 2147483648 -> 2^31 
 		if ((vv > 1073741824) && i > 1) vv -= 1073741824; // 1073741824 -> 2^30 
 		if ((vv > 536870912) && i > 2) vv -= 536870912; // 536870912 -> 2^29 
@@ -527,73 +527,3 @@ var bitpack;
 
 	}
 })(bitpack || (bitpack = {}));
-
-var target = new Uint8Array(4);
-// bitpack.write(target, 509, 0, 9);
-bitpack.write(target, 7, 0, 3);
-bitpack.write(target, 5, 3, 3);
-
-var v = bitpack.read(target, 0, 3);
-// console.log(target);
-console.log(v);
-
-// for (var i=0;i<4;i++) visualize(target[i]);
-
-
-function visualizeArray(arr)
-{
-	for (var i=0;i<arr.length;i++) visualize(arr[i]);
-}
-function visualize(byte)
-{
-	var s = "";
-	for (var i=7;i>-1;i--)
-	{
-		if (i % 2 == 1)
-			s+= " ";
-		s = s + "" + ((byte & Math.pow(2, i)) / Math.pow(2, i));
-	}
-	console.log(s);
-}
-
-test();
-
-function test()
-{
-	var counter = 0;
-	var target = new Uint8Array(4);
-	for (var bs=1;bs<26;bs++)
-	{
-		for (var v=0;v<Math.pow(2,bs);v++)
-		{
-			for (var offset=0;offset<8;offset++)
-			{
-				bitpack.write(target, v, offset, bs);
-				var v2 = bitpack.read(target, offset, bs);
-				if (v == v2)
-				{
-					counter++;
-					if (counter % 100000 == 0)
-						console.log("-------ok------- " + counter);
-
-					// console.log("value written " + v);
-					// console.log("bitsize " + bs);
-					// console.log("offset " + offset);
-					// console.log("value read " + v2);
-					// console.log("-------ok-------");
-				}
-				else
-				{
-					console.log("failed at " + counter);
-					console.log("value written " + v);
-					console.log("bitsize " + bs);
-					console.log("offset " + offset);
-					console.log("value read " + v2);
-
-					visualizeArray(target);
-					process.exit();
-				}
-			}
-		}
-	}
-}
