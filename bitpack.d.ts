@@ -9,4 +9,6 @@ declare class bitstream
 	constructor(target: Uint8Array);
 	read(bitsize: number): number;
 	write(value: number, bitsize: number);
+	readCursor: number;
+	writeCursor: number;
 }
