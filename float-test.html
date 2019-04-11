@@ -13,12 +13,12 @@ window.onload = main;
 function main()
 {
 	var s = new bitstream(new Uint8Array(16));
-	var v = 3251;
+	var v = 19213211;
 	s.writef13(v);
-	s.writef9(v);
+	s.writef8(v);
 	console.log(v);
 	console.log(s.readf13());
-	console.log(s.readf9());
+	console.log(s.readf8());
 }
 </script>
 </html>

@@ -547,6 +547,9 @@ function bitstream(stream)
 		self.writeCursor += bitsize;
 	}
 
+	var F8_CAPACITY = 32 * 10000000;
+	var F13_CAPACITY = 1024 * 10000000;
+
 	self.readf13 = function()
 	{
 		var s = self.read(10);
@@ -556,9 +559,7 @@ function bitstream(stream)
 
 	self.writef13 = function(value)
 	{
-		var limit = 1024 * 10000000;
-
-		if (value >= limit) throw("value " + value + " is to big for f13");
+		if (value >= F13_CAPACITY) throw("value " + value + " is to big for f13");
 		var e,s;
 		s = value;
 		e = 0;
@@ -575,31 +576,30 @@ function bitstream(stream)
 		self.write(e, 3);
 	}
 
-	self.readf9 = function()
+	self.readf8 = function()
 	{
-		var s = self.read(7);
-		var e = self.read(2);
+		var s = self.read(5);
+		var e = self.read(3);
 		return s * Math.pow(10, e);
 	}
 
-	self.writef9 = function(value)
+	self.writef8 = function(value)
 	{
-		var limit = 128 * 1000;
-		if (value >= limit) throw("value " + value + " is to big for f9");
+		if (value >= F8_CAPACITY) throw("value " + value + " is to big for f8");
 		var e,s;
 		s = value;
 		e = 0;
 		while (1)
 		{
-			if (s < 128)
+			if (s < 32)
 				break;
 
 			s = Math.floor(s / 10);
 			e++;
 		}
 
-		self.write(s, 7);
-		self.write(e, 2);
+		self.write(s, 5);
+		self.write(e, 3);
 	}
 }
 
