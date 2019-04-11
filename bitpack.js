@@ -177,10 +177,10 @@ var bitpack;
 		// 00 00 xy 00
 		// 00 00 0x y0
 		// 00 00 00 xy
-		// 00 00 00 0x | y0 00 00 00		
+		// 00 00 00 0x | y0 00 00 00
 
 		// bitsize = 9
-		// ab cd ef gh | i0 00 00 00	
+		// ab cd ef gh | i0 00 00 00
 		// 0a bc de fg | hi 00 00 00
 		// 00 ab cd ef | gh i0 00 00
 		// 00 0a bc de | fg hi 00 00
@@ -188,7 +188,6 @@ var bitpack;
 		// 00 00 0a bc | de fg hi 00
 		// 00 00 00 ab | cd ef gh i0
 		// 00 00 00 0a | bc de fg hi
-
 
 		var vv = (target[b] << 8) + target[b+1];
 		var sh = 16 - (i + bs);
@@ -546,6 +545,61 @@ function bitstream(stream)
 	{
 		bitpack.write(self.stream, value, self.writeCursor, bitsize);
 		self.writeCursor += bitsize;
+	}
+
+	self.readf13 = function()
+	{
+		var s = self.read(10);
+		var e = self.read(3);
+		return s * Math.pow(10, e);
+	}
+
+	self.writef13 = function(value)
+	{
+		var limit = 1024 * 10000000;
+
+		if (value >= limit) throw("value " + value + " is to big for f13");
+		var e,s;
+		s = value;
+		e = 0;
+		while (1)
+		{
+			if (s < 1024)
+				break;
+
+			s = Math.floor(s / 10);
+			e++;
+		}
+
+		self.write(s, 10);
+		self.write(e, 3);
+	}
+
+	self.readf9 = function()
+	{
+		var s = self.read(7);
+		var e = self.read(2);
+		return s * Math.pow(10, e);
+	}
+
+	self.writef9 = function(value)
+	{
+		var limit = 128 * 1000;
+		if (value >= limit) throw("value " + value + " is to big for f9");
+		var e,s;
+		s = value;
+		e = 0;
+		while (1)
+		{
+			if (s < 128)
+				break;
+
+			s = Math.floor(s / 10);
+			e++;
+		}
+
+		self.write(s, 7);
+		self.write(e, 2);
 	}
 }
 

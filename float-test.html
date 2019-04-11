@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>bitpack test</title>
+	<script src="bitpack.js"></script>
+</head>
+<body>check console</body>
+<script>
+window.onload = main;
+function main()
+{
+	var s = new bitstream(new Uint8Array(16));
+	var v = 3251;
+	s.writef13(v);
+	s.writef9(v);
+	console.log(v);
+	console.log(s.readf13());
+	console.log(s.readf9());
+}
+</script>
+</html>
